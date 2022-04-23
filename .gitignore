@@ -1,0 +1,11 @@
+*.pdf_tex
+*.aux
+*.bbl
+*.blg
+*.dvi
+*.log
+*.out
+*.synctex.gz
+*.toc
+*.log
+*.odp
