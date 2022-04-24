@@ -8,11 +8,13 @@ Uno de los aspectos más dificultosos para los estudiantes de la disciplina de s
 En la actualidad ya existen numerosas implementaciones que logran este tipo de visualizaciones. No obstante, se pueden clasificar en dos conjuntos:
 
 \begin{enumerate}
-\item Las que ejecutan una simulación. Los nodos del sistema distribuido no son "reales", si no que se simula el comportamiento con fines meramente visuales. Algunos ejemplos de este tipo son \cite{raft1}\cite{raft2}\cite{raft3}.
-\item Las que visualizan una ejecución real. En estas implementaciones los nodos sí son procesos reales que se ejecutan localmente o en un serbidor. El entorno de visualización captura, de alguna manera, los mensajes entre nodos para visualizar el estado de cada uno. Un ejemplo de este tipo es \cite{MOSES200497}.
+\item Las que ejecutan una simulación. Los nodos del sistema distribuido no son ``reales``, si no que se simula el comportamiento con fines meramente visuales. Algunos ejemplos de este tipo son \cite{raft1}\cite{raft2}\cite{raft3}.
+\item Las que visualizan una ejecución real. En estas implementaciones los nodos sí son procesos reales que se ejecutan localmente o en un servidor. El entorno de visualización captura, de alguna manera, los mensajes entre nodos para visualizar el estado de cada uno. Un ejemplo de este tipo es \cite{MOSES200497}.
 \end{enumerate}
 
 Sin embargo, en lo que se refiere a las implementaciones del primer tipo, la ejecución \textit{no real} del algoritmo no proporciona una representación realista del algoritmo, puesto que no se visualiza ningún proceso en tiempo de ejecución. Estas implementaciones por lo general tienen como objetivo único la visualización de la simulación de un algoritmo concreto, por lo que el algoritmo está integrado de alguna forma en la lógica de la aplicación. En estos casos se cumpliría el objetivo de facilitar la comprensión de los algoritmos, pero estos entornos presentan varias restricciones:
+
+\newpage
 
 \begin{itemize}
 \item Por lo general únicamente visualizan un algoritmo concreto, y este está fuertemente integrado con la interfaz. Por este motivo resulta complicado reemplazar el algoritmo en caso de que se quiera visualizar otro.
@@ -22,7 +24,7 @@ Sin embargo, en lo que se refiere a las implementaciones del primer tipo, la eje
 Estas restricciones motivan, en parte, la creación de entornos del segundo tipo, que visualizan una ejecución real de un algoritmo. Estos tienen las siguientes ventajas comparados con los del primer tipo:
 
 \begin{itemize}
-\item La implementación de la interfaz de visualización del algoritmo es independiente del propio algoritmo que se visualiza. Este desacoplamiento permite intercambiar el algoritmo a visualizar fácilmente sin tener que considerar los aspectos programáticos para visualizarlo.
+\item La implementación de la interfaz de visualización del algoritmo suele ser independiente del propio algoritmo que se visualiza. Este desacoplamiento permite intercambiar el algoritmo a visualizar fácilmente sin tener que considerar muchos de los aspectos programáticos para visualizarlo.
 \item Dado que se muestra una ejecución real el entorno está implícitamente capacitado para representar cualquier situación que se pueda presentar.
 \end{itemize}
 
@@ -36,9 +38,11 @@ Teniendo en cuenta los puntos mencionados, se puede deducir que lo ideal es cont
 \item Se permite al usuario interactuar con los nodos, pausando o deteniendo su ejecución en tiempo real desde la interfaz.
 \end{itemize}
 
-Existen implementaciones que cumplen algunas de estas características, por ejemplo []. Esta permite visualizar una ejecución real, sin embargo no permite interactuar manualmente con cada nodo. Además, el diseño de la arquitectura de la implementación no permite un desacople completo del algoritmo con la interfaz. Para visualizar un algoritmo en este entorno es necesario implementar el algoritmo a visualizar en el lenguaje \textit{Java}, y además una serie de métodos para visualizarlo correctamente.
+Existen implementaciones que cumplen algunas de estas características, por ejemplo \cite{MOSES200497}. Esta permite visualizar una ejecución real, sin embargo no permite interactuar manualmente con cada nodo. Además, el diseño de la arquitectura de la implementación no permite un desacople completo del algoritmo con la interfaz. Para visualizar un algoritmo en este entorno es necesario implementar el algoritmo a visualizar en el lenguaje \textit{Java}, y además una serie de métodos para visualizarlo correctamente.
 
 Por lo general, ninguna implementación actual cumple estrictamente con los tres requisitos que se mencionan. El principal objetivo de este proyecto es proporcionar un entorno que los cumpla.
+
+\newpage
 
 El contenido del resto del documento se organiza de la siguiente forma. En el capítulo de desarrollo se explica primero la arquitectura del entorno de visualización, seguida de la explicación detallada de la implementación y la justificación de las decisiones tomadas. Seguidamente se explica un caso de uso con una implementación concreta de un algoritmo (Raft). El funcionamiento detallado de este algoritmo se explica en el Anexo. Finalmente se describen los resultados obtenidos y el impacto, verificando que se han cumplido los objetivos del proyecto.
 
