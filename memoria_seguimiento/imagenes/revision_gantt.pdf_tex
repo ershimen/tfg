@@ -1,0 +1,81 @@
+%% Creator: Inkscape 1.0.2-2 (e86c870879, 2021-01-15), www.inkscape.org
+%% PDF/EPS/PS + LaTeX output extension by Johan Engelen, 2010
+%% Accompanies image file 'revision_gantt.pdf' (pdf, eps, ps)
+%%
+%% To include the image in your LaTeX document, write
+%%   \input{<filename>.pdf_tex}
+%%  instead of
+%%   \includegraphics{<filename>.pdf}
+%% To scale the image, write
+%%   \def\svgwidth{<desired width>}
+%%   \input{<filename>.pdf_tex}
+%%  instead of
+%%   \includegraphics[width=<desired width>]{<filename>.pdf}
+%%
+%% Images with a different path to the parent latex file can
+%% be accessed with the `import' package (which may need to be
+%% installed) using
+%%   \usepackage{import}
+%% in the preamble, and then including the image with
+%%   \import{<path to file>}{<filename>.pdf_tex}
+%% Alternatively, one can specify
+%%   \graphicspath{{<path to file>/}}
+%% 
+%% For more information, please see info/svg-inkscape on CTAN:
+%%   http://tug.ctan.org/tex-archive/info/svg-inkscape
+%%
+\begingroup%
+  \makeatletter%
+  \providecommand\color[2][]{%
+    \errmessage{(Inkscape) Color is used for the text in Inkscape, but the package 'color.sty' is not loaded}%
+    \renewcommand\color[2][]{}%
+  }%
+  \providecommand\transparent[1]{%
+    \errmessage{(Inkscape) Transparency is used (non-zero) for the text in Inkscape, but the package 'transparent.sty' is not loaded}%
+    \renewcommand\transparent[1]{}%
+  }%
+  \providecommand\rotatebox[2]{#2}%
+  \newcommand*\fsize{\dimexpr\f@size pt\relax}%
+  \newcommand*\lineheight[1]{\fontsize{\fsize}{#1\fsize}\selectfont}%
+  \ifx\svgwidth\undefined%
+    \setlength{\unitlength}{1589.49157234bp}%
+    \ifx\svgscale\undefined%
+      \relax%
+    \else%
+      \setlength{\unitlength}{\unitlength * \real{\svgscale}}%
+    \fi%
+  \else%
+    \setlength{\unitlength}{\svgwidth}%
+  \fi%
+  \global\let\svgwidth\undefined%
+  \global\let\svgscale\undefined%
+  \makeatother%
+  \begin{picture}(1,0.22211351)%
+    \lineheight{1}%
+    \setlength\tabcolsep{0pt}%
+    \put(0,0){\includegraphics[width=\unitlength,page=1]{revision_gantt.pdf}}%
+    \put(0.16682974,0.19178415){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\textbf{Tarea}\end{tabular}}}}%
+    \put(0.37377692,0.19178415){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}25/4 - 1/5\end{tabular}}}}%
+    \put(0.44765166,0.19178415){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}2/5 - 8/5\end{tabular}}}}%
+    \put(0.5156556,0.19178415){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}9/5 - 15/5\end{tabular}}}}%
+    \put(0.58365953,0.19178415){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}16/5 - 22/5\end{tabular}}}}%
+    \put(0.65459887,0.19178415){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}23/5 - 29/5\end{tabular}}}}%
+    \put(0.72847357,0.19178415){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}30/5 - 5/6\end{tabular}}}}%
+    \put(0.79941297,0.19178415){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}6/6 - 12/6\end{tabular}}}}%
+    \put(0.86741687,0.19178415){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}13/6 - 19/6\end{tabular}}}}%
+    \put(0.93835619,0.19178415){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}20/6 - 27/6\end{tabular}}}}%
+    \put(0.00195694,0.16940668){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}Diseño de la interacción del cuadro de mandos con el algoritmo\end{tabular}}}}%
+    \put(0.00195694,0.1469018){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}Formación en tecnologías de visualización y lenguajes de programación necesarios\end{tabular}}}}%
+    \put(0.00195694,0.1243969){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}Selección e implementación del algoritmo a visualizar\end{tabular}}}}%
+    \put(0.00195694,0.101892){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}Implementación y pruebas del cuadro de mandos\end{tabular}}}}%
+    \put(0.00195694,0.07938712){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}Elaboración de la memoria\end{tabular}}}}%
+    \put(0.00195694,0.05688222){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}Elaboración de la presentación\end{tabular}}}}%
+    \put(0.00195694,0.03437734){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}Preparación de la defensa del trabajo\end{tabular}}}}%
+    \put(0.71771038,0.01700546){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.29324007}\smash{\begin{tabular}[t]{l}\textbf{2 junio}: memoria \\final\end{tabular}}}}%
+    \put(0.85958906,0.01700546){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.29324007}\smash{\begin{tabular}[t]{l}\textbf{16 junio}: \\presentación\end{tabular}}}}%
+    \put(0.93052838,0.01700546){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.29324007}\smash{\begin{tabular}[t]{l}\textbf{17, 20, 21 junio}: \\defensa\end{tabular}}}}%
+    \put(0.52690805,0.21197029){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\textbf{Mayo}\end{tabular}}}}%
+    \put(0.84686892,0.21197029){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\textbf{Junio}\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=2]{revision_gantt.pdf}}%
+  \end{picture}%
+\endgroup%
