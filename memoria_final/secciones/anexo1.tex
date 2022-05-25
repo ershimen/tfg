@@ -1,1 +1,11 @@
 \chapter*{Anexo I - Algoritmo Raft}
+
+En materia de Sistemas Distribuidos, uno de los aspectos más dificultosos es mantener la consistencia de los datos en diferentes máquinas. Para lograr esto, se han diseñado numerosos algoritmos, como por ejemplo Paxos CITAR o Raft \cite{raft1}. Para este proyecto se ha escogido la implementación de Raft puesto que la implementación, que no deja de ser sencilla, es más sencilla que otros algoritmos, y además la implementación del algoritmo a visualizar no es el objetivo principal.
+
+\textit{Raft} es un algoritmo empleado para mantener un \textit{log} replicado en múltiples máquinas. Garantiza la integraidad de la información y también ofrece resistencia a comportamiento anóamlo de nodos o caída de estos. Los creadores de este algoritmo, ... y ..., tuvieron como objetivo principal diseñar un algoritmo cuyo funcionamiento sea simple. Previamente a su invención, existían otros algoritmos de este tipo, por ejemplo Paxos CITAR, pero la complejidad de estos impedía que se emplearan extensivamente.
+
+Los nodos que ejecutan el algoritmo \textit{Raft} pueden pertenecer a tres estados: \textit{leader} (líder), \textit{candidate} (candidato) y \textit{follower} (seguidor). Los nodos comienzan su ejecución en el estado \textit{candidate}, y dependiendo del estado en el que se encuentre un nodo, ejecuta determinadas operaciones. Por otra parte, cada nodo guarda el \textit{term} en el que se encuentra. Este valor sirve, entre otras cosas, para determinar la antiguedad de los datos de un nodo.
+
+\subsection{Estado \textit{leader}}
+
+Este estado es el más sencillo, dado que lo único que realiza el nodo es enviar mensajes de tipo \textit{AppendEntries} a los nodos vecinos cada varios decisegundos. Estos mensajes contienen las nuevas entradas de \textit{log} que recibe el algoritmo para replicar en todos los nodos.

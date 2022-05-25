@@ -46,6 +46,7 @@
      numberstyle=\tiny,
      numberfirstline = false,
      breaklines=true,
+     tabsize=3,
    }
 \lstnewenvironment{listing}[1][]
    {\lstset{#1}\pagebreak[0]}{\pagebreak[0]}
@@ -72,6 +73,10 @@
 
 \lstdefinestyle{Python}
    {language=Python,
+   }
+
+\lstdefinestyle{Go}
+   {language=go,
    }
 
 
@@ -109,6 +114,8 @@
 \mainmatter
 
 \input{secciones/intro}
+
+\input{secciones/vocabulario}
 
 \input{secciones/desarrollo}
 
