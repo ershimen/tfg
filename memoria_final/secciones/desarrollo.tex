@@ -50,13 +50,24 @@ La ventaja principal de esta arquitectura comparada con las anterior, es que per
 
 \section{Implementación del algoritmo \texttt{Raft}}
 
-Para la implementación del algoritmo Raft, se ha escogido el lenguaje de programación \textit{Go} CITAR, que proporciona numerosas comodidades y ventajas a la hora de programar aplicaciones distribuidas. Por otra parte, la propuesta original de \textit{Raft} sugiere que la comunicación entre los nodos se implemente mediante llamadas a procedimientos remotos (RPC) puesto que se elimina la complejidad que supone enviar y recibir mensajes con \textit{sockets}. Sin embargo, en esta implementación, se ha diseñado la comunicación con mensajes TCP. Además de que actualmente existen numerosas implementaciones del algoritmo empleando llamadas a procedimientos remotos, la ventaja de los mensajes TCP es que es mucho más claro el proceso de envío y recepción de los mensajes.
+Para la implementación del algoritmo Raft, se ha escogido el lenguaje de programación \textit{Go} \cite{go}, que proporciona numerosas comodidades y ventajas a la hora de programar aplicaciones distribuidas. Por otra parte, la propuesta original de \textit{Raft} \cite{raft1} sugiere que la comunicación entre los nodos se implemente mediante llamadas a procedimientos remotos (RPC) puesto que se elimina la complejidad que supone enviar y recibir mensajes con \textit{sockets}. Sin embargo, en esta implementación, se ha diseñado la comunicación con mensajes tradicionales TCP. Además de que actualmente existen numerosas implementaciones del algoritmo empleando llamadas a procedimientos remotos \cite{raftetcd}\cite{rafteliben}, la ventaja de los mensajes TCP es que es mucho más claro el proceso de envío y recepción de los mensajes.
 
-Además de este aspecto, la implementación incluye la elección de líder completa y la replicación de \textit{log} parcial. La replicación no está completa puesto que esta implementación tiene como objetivo visualizar los mensajes relacionados con el algoritmo, y no el contenido de los \textit{logs} replicados. Por otra parte, la implementación está diseñada para interactuar con cada nodo mediante la entrada estándar del proceso. La función principal de la implementación (\textit{Main}) contiene la lógica necesaria para interactuar con los procesos en segundo plano que ejecutan el algoritmo.
+Además de este aspecto, la implementación incluye la elección de líder completa y la replicación de \textit{log} parcial. La replicación no está completa puesto que esta implementación tiene como objetivo visualizar los mensajes relacionados con el algoritmo, y no el contenido de los \textit{logs} replicados. Por otra parte, la implementación está diseñada para interactuar con cada nodo mediante la entrada estándar del proceso. La función principal de la implementación (\textit{Main}) contiene la lógica necesaria para interactuar con los procesos en segundo plano que ejecutan el algoritmo. Las funcionalidades o comandos que incluye esta implementación son las siguientes:
 
-La descripción simplificada del algoritmo \textit{Raft} puede leerse en el Anexo, o en el artículo original CITAR (versión completa y detallada). Por otra parte, sólo se muestran partes del código simplificadas que no contienen control de errores.
+\begin{itemize}
+\item\texttt{START}: Comenzar a ejecutar el algoritmo.
+\item\texttt{STOP}: Detiene la ejecución del algoritmo.
+\item\texttt{ADD}: Añade un nodo vecino. Se debe suministrar como parámetro la dirección válida del nodo vecino con formato \texttt{ip:puerto}.
+\item\texttt{PEERS}: Imprime la lista de nodos vecinos.
+\end{itemize}
 
-Cuando un nodo comienza a ejecutar el algoritmo, comienzan a ejecutarse dos procesos secundarios. El primer proceso ejecuta la función \texttt{raft}, que contiene la mayoría del funcionamiento del algoritmo, mientras que el segundo ejecuta la función \texttt{listener}, que es la encargada de recibir mensajes del \textit{socket}. La comunicación entre estas funciones se lleva a cabo mendiante canales de Go, una de las mejores funcionalidades del lenguaje, que son similares a los \textit{pipes} de Linux. El proceso que ejecuta la función \texttt{raft} recibe mensajes de este canal, y en función del estado del nodo y otros factores, actúa de una manera u otra. Por otra parte la función \texttt{listener}, entre otras, envía mensajes al canal. El estado del algoritmo se almacena en una estructura con los siguientes campos (se muestran únicamente los relacionados con la descripción del algoritmo):
+A continuación se descibe la implementación de cada uno de los componentes del algoritmo. La descripción simplificada de \textit{Raft} puede leerse en el Anexo, o en el artículo original \cite{raft1} (versión completa y detallada). Por otra parte, sólo se muestran partes del código simplificadas que no contienen control de errores.
+
+Cuando un nodo comienza a ejecutar el algoritmo, comienzan a ejecutarse dos procesos secundarios. El primer proceso ejecuta la función \texttt{raft}, que contiene la mayoría del funcionamiento del algoritmo, mientras que el segundo ejecuta la función \texttt{listener}, que es la encargada de recibir mensajes del \textit{socket}. La comunicación entre estas funciones se lleva a cabo mendiante canales de Go \cite{gochannels}, una de las mejores funcionalidades del lenguaje, que son similares a los \textit{pipes} de Linux. El proceso que ejecuta la función \texttt{raft} recibe mensajes de este canal, y en función del estado del nodo y otros factores, actúa de una manera u otra. Por otra parte la función \texttt{listener}, entre otras, envía mensajes al canal.
+
+\subsection{Estado del algoritmo}
+
+El estado del algoritmo se almacena en una estructura con los siguientes campos (se muestran únicamente los relacionados con la descripción del algoritmo):
 
 \begin{lstlisting}[language=go]
 type NodeStatus struct {
@@ -71,6 +82,8 @@ type NodeStatus struct {
 	eventChan          chan Event     // Canal de comunicacion
 }
 \end{lstlisting}
+
+\subsection{Implementación de \texttt{listener}}
 
 La implementación de la función \texttt{listener} es simple:
 
@@ -107,7 +120,11 @@ func listener(l *net.TCPListener, status *NodeStatus) {
 }
 \end{lstlisting}
 
-A esta función se le pasa como parámetro el estado del nodo, y el socket por el que el nodo recibe mensajes. A modo de resumen, la funcionalidad se basa en esperar a recibir una nueva conexión en el socket y procesar el mensaje con la función \texttt{responseHandler}, o bien enviar el evento de \textit{timeout} al canal de comunicación en el caso de que no se reciba una conexión en un tiempo determinado. La implementación de la función \texttt{responseHandler} es la siguiente:
+A esta función se le pasa como parámetro el estado del nodo, y el socket por el que el nodo recibe mensajes. A modo de resumen, la funcionalidad se basa en esperar a recibir una nueva conexión en el \textit{socket} y procesar el mensaje con la función \texttt{responseHandler}, o bien enviar el evento de \textit{timeout} al canal de comunicación en el caso de que no se inicie una conexión en un tiempo determinado.
+
+\subsection{Implementación de \texttt{responseHandler}}
+
+La implementación de la función \texttt{responseHandler} es la siguiente:
 
 \begin{lstlisting}[language=go]
 func responseHandler(conn net.Conn, status *NodeStatus) {
@@ -124,7 +141,11 @@ func responseHandler(conn net.Conn, status *NodeStatus) {
 }
 \end{lstlisting}
 
-Esta función recibe del \textit{socket} un mensaje, lo deserializa a un \texttt{struct} de Go y envía este objeto al canal. La función que lee y procesa los mensajes del canal es \texttt{raft}, que implementa la mayoría de las funcionalidades del algoritmo.
+Esta función recibe del \textit{socket} un mensaje, lo deserializa a un \texttt{struct} de Go \cite{gostructs} y envía este objeto al canal.
+
+\subsection{Implementación de \texttt{raft}}
+
+La función que lee y procesa los mensajes del canal es \texttt{raft}, que implementa la mayoría de las funcionalidades del algoritmo.
 
 \begin{lstlisting}[language=go]
 func raft(wg *sync.WaitGroup, status *NodeStatus) {
@@ -196,6 +217,8 @@ Como se puede observar, esta función altera el estado del algoritmo en función
 \item Si el tipo del mensaje es \texttt{followerTimeout}, significa que la función \texttt{listener} no ha recibido una nueva conexión en el tiempo del \textit{timeout}. Este escenario implica que el nodo inicie una votación (función \texttt{startElection}) en el caso de que sea seguidor o candidato.
 \end{itemize}
 
+\subsection{Implementación de \texttt{leaderHeartbeats}}
+
 La función \texttt{leaderHeartbeats} se ejecuta cuando el estado del nodo es \texttt{leader}. El objetivo es enviar periódicamente mensajes de tipo \texttt{appendEntries} a los nodos vecinos para que continúen en el estado \textit{follower}. Sólamente termina cuando el estado del nodo deja de ser \textit{leader}. 
 
 \begin{lstlisting}[language=go]
@@ -223,6 +246,8 @@ func leaderHeartbeats(status *NodeStatus) {
 }
 \end{lstlisting}
 
+\subsection{Implementación de \texttt{startElection}}
+
 Por último, la función \texttt{startElection} es la encargada de enviar mensajes de tipo \texttt{requestVote} a los nodos vecinos cuando se inicia una nueva elección. 
 
 \begin{lstlisting}[language=go]
@@ -245,7 +270,7 @@ func startElection(status *NodeStatus) {
 
 \section{Implementación del proceso \textit{capturador}}
 
-Como se describe en la sección~\ref{sec:arquitectura}, el proceso capturador debe capturar los mensajes de red que envía el nodo y reenviarlos al proceso manager. Además de esto, para permitir una comuincación bidireccional, debe ser capaz de interactuar con el proceso que ejecuta el algoritmo.
+Como se describe en la sección~\ref{sec:arquitectura}, el proceso capturador debe capturar los mensajes de red que envía el nodo y reenviarlos al proceso manager. Además de esto, para permitir una comunicación bidireccional, debe ser capaz de interactuar con el proceso que ejecuta el algoritmo.
 
 \begin{itemize}
 \item Explicar que no se pueden hacer sockets raw de python en windows
