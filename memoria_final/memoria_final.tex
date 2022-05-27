@@ -79,6 +79,22 @@
    {language=go,
    }
 
+\lstdefinelanguage{JavaScript}{
+  keywords={typeof, new, true, false, catch, function, return, null, catch, switch, var, if, in, while, do, else, case, break},
+  keywordstyle=\color{black}\bfseries,
+  ndkeywords={class, export, boolean, throw, implements, import, this},
+  ndkeywordstyle=\color{darkgray}\bfseries,
+  identifierstyle=\color{black},
+  sensitive=false,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{gray}\ttfamily,
+  stringstyle=\color{gray}\ttfamily,
+  morestring=[b]',
+  morestring=[b]",
+  morestring=[b]`
+}
+
 
 \usepackage[textwidth=2.5cm, textsize=smaller]{todonotes}
 \setlength{\marginparwidth}{2.5cm}
@@ -116,6 +132,8 @@
 \input{secciones/intro}
 
 \input{secciones/vocabulario}
+
+\input{secciones/arquitectura}
 
 \input{secciones/desarrollo}
 
