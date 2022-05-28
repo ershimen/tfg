@@ -366,7 +366,7 @@ En este apartado se demuestra la funcionalidad completa de la aplicación con un
 
 Una vez incializadas se introduce en el campo asociado con el botón ''\textit{Add node}'' de la interfaz, una a una cada dirección de cada instancia. El proceso capturador muestra convenientemente, por la salida estándar, la dirección del nodo con el formato adecuado para que el usuario únicamente tenga que copiar y pegar la información, sin necesidad de escribir manualmente. El resultado de insertar varios nodos en el sistema de visualización es se puede apreciar en la captura de pantalla de la figura~\ref{fig:ui1}.
 
-\begin{figure}[!htb]
+\begin{figure}[h]
   \centering
   \includegraphics[width=0.9\linewidth]{imagenes/ui1}
   \caption{Resultado de añadir varios nodos en la visualización}
@@ -377,28 +377,28 @@ Como se puede observar, se desconoce el \texttt{term} de cada nodo. Esto se debe
 
 En primer lugar, se pulsa en el botón de edición para acceder al menú de conexiones, esto se puede observar en la figura~\ref{fig:ui2}. Seguidamente se pulsa el botón ''\textit{Add Connection}''. A continuación se pulsa en un nodo y, manteniendo la pulsación, se arrastra el puntero hasta otro nodo donde se suelta (Figura~\ref{fig:ui3}). El resultado son dos vértices entre ambos nodos, cada uno simboliza la conexión en un sentido. El resultado final de este paso se muestra en la figura~\ref{fig:ui4}. A continuación se sigue el mismo procedimiento para añadir las conexiones restantes que se deseen. Un ejemplo de configuración final se puede apreciar en la figura~\ref{fig:ui5}.
 
-\begin{figure}[!htb]
+\begin{figure}[p]
   \centering
   \includegraphics[width=0.9\linewidth]{imagenes/ui2}
   \caption{Menú de conexiones}
   \label{fig:ui2}
 \end{figure}
 
-\begin{figure}[!htb]
+\begin{figure}[p]
   \centering
   \includegraphics[width=0.9\linewidth]{imagenes/ui3}
   \caption{Proceso de crear una nueva conexión}
   \label{fig:ui3}
 \end{figure}
 
-\begin{figure}[!htb]
+\begin{figure}[p]
   \centering
   \includegraphics[width=0.9\linewidth]{imagenes/ui4}
   \caption{Resultado de añadir una nueva conexión}
   \label{fig:ui4}
 \end{figure}
 
-\begin{figure}[!htb]
+\begin{figure}[p]
   \centering
   \includegraphics[width=0.9\linewidth]{imagenes/ui5}
   \caption{Resultado de añadir todas las conexiones}
@@ -407,7 +407,7 @@ En primer lugar, se pulsa en el botón de edición para acceder al menú de cone
 
 Ahora que se han añadido los nodos y conexiones deseados, se puede proceder a inciar la ejecución de cada uno de los nodos. Para ello se pulsará sobre un nodo para seleccionarlo, y posteriormente se pulsará el botón ''\textit{Start selected nodes}''. Seguidamente se seleccionarán los nodos restantes y se pulsará el mismo botón de nuevo. Esto provocará que el primer nodo sea líder puesto que comenzará la ejecución antes que los demás. A partir de este momento, los mensajes entre nodos se mostrarán como círculos azules recorriendo los vértices. Como es lógico, en la imagen no se muestra la animación. Cabe destacar que el campo \texttt{term} cuyo valor antes era desconocido, ahora se conoce puesto que se extrae de los mensajes. El resultado final se puede apreciar en la figura~\ref{fig:ui6}.
 
-\begin{figure}[!htb]
+\begin{figure}[p]
   \centering
   \includegraphics[width=0.9\linewidth]{imagenes/ui6}
   \caption{Visualización del tránsito de mensajes}
@@ -416,18 +416,16 @@ Ahora que se han añadido los nodos y conexiones deseados, se puede proceder a i
 
 Cabe destacar que no es necesario añadir todos los nodos y las conexiones antes de arrancar la ejecución de estos. Se pueden añadir sin problema durante la ejecución. Un ejemplo de esto se muestra en las figuras~\ref{fig:ui7} y~\ref{fig:ui8}, donde se añade otro nodo y se conecta a uno de los nodos existentes.
 
-\begin{figure}[!htb]
+\begin{figure}[p]
   \centering
   \includegraphics[width=0.9\linewidth]{imagenes/ui7}
   \caption{Añadir nodo nuevo durante la ejecución de otros nodos}
   \label{fig:ui7}
 \end{figure}
 
-\begin{figure}[!htb]
+\begin{figure}[p]
   \centering
   \includegraphics[width=0.9\linewidth]{imagenes/ui8}
   \caption{Visualización del tránsito de mensajes con el nuevo nodo}
   \label{fig:ui8}
 \end{figure}
-
-\newpage
