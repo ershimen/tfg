@@ -2,7 +2,7 @@
 
 En este último capítulo se describen las conclusiones personales con respecto a la realización de este proyecto. Recapitulando los objetivos del proyecto indicados en la introducción, se pretende implementar una aplicación que permita visualizar una ejecución real de un algoritmo distribuido, permitiendo interactuar con los nodos. Además de ofrecer la posibilidad de intercambiar fácilmente el algoritmo a visualizar. Como se ha justificado en los apartados del desarrollo, el diseño y la implementación cumple con estos tres requisitos del proyecto.
 
-Dejando a un lado los objetivos mencionados en la introducción, este proyecto también ha supuesto un reto en otros aspectos. Para empezar, todos los lenguajes de implementación excepto Python eran desconocidos. La implementación de todos los módulos ha supuesto aprender HTML, CSS, JavaScript y Go en unos 4 meses. Por lo general ha sido bastante desafiante, sobre todo la parte del desarrollo \textit{web}. Sin duda la mayoría de los problemas surgidos durante el desarrollo han sido causados por la falta de experienca de programación en estos lenguajes. Además de aprender sobre lenguajes concretos, también se han empleado herramientas y \textit{frameworks} de estos, por ejemplo \textit{electron}\cite{electron} o Node.js\cite{nodejs}, que también requieren un periodo de formación.
+Dejando a un lado los objetivos mencionados en la introducción, este proyecto también ha supuesto un reto en otros aspectos. Para empezar, todos los lenguajes de implementación excepto \textit{Python} eran desconocidos. La implementación de todos los módulos ha supuesto aprender \textit{HTML}, \textit{CSS}, \textit{JavaScript} y \textit{Go} en unos 4 meses. Por lo general ha sido bastante desafiante, sobre todo la parte del desarrollo \textit{web}. Sin duda la mayoría de los problemas surgidos durante el desarrollo han sido causados por la falta de experienca de programación en estos lenguajes. Además de aprender sobre lenguajes concretos, también se han empleado herramientas y \textit{frameworks} de estos, por ejemplo \textit{electron}\cite{electron} o \textit{Node.js}\cite{nodejs}, que también requieren un periodo de formación.
 
 Por otra parte, la formación en estos lenguajes de programación supone un buen complemento para el Currículum Vitae, puesto que son tecnologías muy demandadas en el mercado. 
 
@@ -10,12 +10,12 @@ Por otra parte, la formación en estos lenguajes de programación supone un buen
 
 Uno de los factores más limitantes en el desarrollo de este proyecto ha sido la cantidad de tiempo que se ha tenido que dedicar a la formación previa. Sin embargo, pese a que se han completado los objetivos principales del proyecto, no se han implementado varias funcionalidades que serían de gran utilidad.
 
-Un ejemplo sería la posibilidad de pausar la ejecución de un nodo, simulando la ejecución lenta de un proceso. Esta funcionalidad no se ha implementado puesto que es complejo pausar la ejecución del algoritmo sin alterar el código fuente de este. Una posible solución sería ejecutar el proceso en un contenedor que permita pausar temporalmente la ejecución.
+Un ejemplo sería la posibilidad de pausar la ejecución de un nodo, simulando la ejecución lenta de un proceso. Esta funcionalidad no se ha implementado puesto que es complejo pausar la ejecución del algoritmo sin alterar el código fuente de este. Una posible solución sería ejecutar el proceso en un contenedor que permita pausar temporalmente la ejecución. Otra funcionalidad interesante sería ralentizar o pausar el envío de mensajes, de tal forma que el nodo origen percibe que se ha enviado el mensaje, pero el nodo destino no lo recibe.
 
-Por otra parte se podrían mejorar otro tipo de aspectos, algunos de estos son los siguientes.
+Por otra parte se podrían mejorar o completar otro tipo de aspectos, algunos de estos son los siguientes.
 
 \begin{enumerate}
-\item En la implementación de Raft, completar la replicación de \textit{log}, y publicar la solución en la lista oficial de implementaciones\cite{raft1}.
+\item En la implementación de \textit{Raft}, completar la replicación de \textit{log}, y publicar la solución en la lista oficial de implementaciones\cite{raft1}.
 
 \item Mejorar la apariencia de los nodos en la interfaz, cambiando el formato del texto.
 

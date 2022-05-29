@@ -1,11 +1,50 @@
-\chapter*{Anexo I - Algoritmo Raft}
+\chapter*{Anexo I - Algoritmo \textit{Raft}}
 
-En materia de Sistemas Distribuidos, uno de los aspectos más dificultosos es mantener la consistencia de los datos en diferentes máquinas. Para lograr esto, se han diseñado numerosos algoritmos, como por ejemplo Paxos CITAR o Raft \cite{raft1}. Para este proyecto se ha escogido la implementación de Raft puesto que la implementación, que no deja de ser sencilla, es más sencilla que otros algoritmos, y además la implementación del algoritmo a visualizar no es el objetivo principal.
+En materia de Sistemas Distribuidos, uno de los aspectos más dificultosos es mantener la consistencia de los datos en diferentes máquinas. Para lograr esto, se han diseñado numerosos algoritmos, como por ejemplo \textit{Paxos}\cite{paxos} o \textit{Raft}\cite{raft1}. Para este proyecto se ha escogido la implementación de Raft puesto que la implementación, que no deja de ser sencilla, es más sencilla que otros algoritmos, y además la implementación del algoritmo a visualizar no es el objetivo principal. \textit{Raft} es un algoritmo que tiene dos objetivos:
 
-\textit{Raft} es un algoritmo empleado para mantener un \textit{log} replicado en múltiples máquinas. Garantiza la integraidad de la información y también ofrece resistencia a comportamiento anóamlo de nodos o caída de estos. Los creadores de este algoritmo, ... y ..., tuvieron como objetivo principal diseñar un algoritmo cuyo funcionamiento sea simple. Previamente a su invención, existían otros algoritmos de este tipo, por ejemplo Paxos CITAR, pero la complejidad de estos impedía que se emplearan extensivamente.
+\begin{itemize}
+\item Elegir un líder en un conjunto de nodos.
+\item Mantener información (\textit{logs}) replicada en múltiples máquinas.
+\end{itemize}
 
-Los nodos que ejecutan el algoritmo \textit{Raft} pueden pertenecer a tres estados: \textit{leader} (líder), \textit{candidate} (candidato) y \textit{follower} (seguidor). Los nodos comienzan su ejecución en el estado \textit{candidate}, y dependiendo del estado en el que se encuentre un nodo, ejecuta determinadas operaciones. Por otra parte, cada nodo guarda el \textit{term} en el que se encuentra. Este valor sirve, entre otras cosas, para determinar la antiguedad de los datos de un nodo.
+Este algoritmo garantiza la integraidad de la información y también ofrece resistencia a comportamiento anóamlo de nodos o caída de estos. Los creadores de este algoritmo, tuvieron como objetivo principal diseñar un algoritmo cuyo funcionamiento sea simple. Previamente a su invención, existían otros algoritmos de este tipo, por ejemplo \textit{Paxos}\cite{paxos}, pero la complejidad de estos impedía que se emplearan extensivamente.
 
-\subsection{Estado \textit{leader}}
+Los nodos que ejecutan el algoritmo \textit{Raft} pueden pertenecer a tres estados: \textit{leader} (líder), \textit{candidate} (candidato) y \textit{follower} (seguidor). Los nodos comienzan su ejecución en el estado \textit{follower}, y dependiendo del estado en el que se encuentre un nodo, ejecuta determinadas operaciones. Por otra parte, cada nodo guarda el \textit{term} en el que se encuentra. Este valor sirve, entre otras cosas, para determinar la antiguedad de los datos de un nodo.
 
-Este estado es el más sencillo, dado que lo único que realiza el nodo es enviar mensajes de tipo \textit{AppendEntries} a los nodos vecinos cada varios decisegundos. Estos mensajes contienen las nuevas entradas de \textit{log} que recibe el algoritmo para replicar en todos los nodos.
+\subsection*{Estado \textit{leader}}
+
+Este estado es el más sencillo, dado que lo único que realiza el nodo es enviar mensajes de tipo \textit{AppendEntries} a los nodos vecinos cada varios decisegundos. A este intervalo de tiempo se le denomina ''\textit{leader heartbeat timeout}''. Estos mensajes contienen las nuevas entradas de \textit{log} que recibe el algoritmo para replicar en todos los nodos. Un nodo deja de ser líder cuando recibe mensajes de otros nodos con un \textit{term} superior. Este escenario significa que el nodo guarda datos antiguos.
+
+\subsection*{Estado \textit{follower}}
+
+Los nodos en el estado \textit{follower} reciben continuamente mensajes de tipo \texttt{AppendEntries} del nodo líder. También cuentan con otro tiempo de \textit{timeout} denominado ''\textit{follower timeout}''. Este tiempo determina el tiempo máximo que puede transcurrir entre dos recepciones de mensajes. Cuando un nodo \textit{follower} deja de recibir mensajes de tipo \textit{AppendEntries} significa que, o bien el líder ha dejado de funcionar, o bien se ha perdido el contacto. Independientemente de la causa del problema, el nodo \textit{follower} pasará al estado \textit{candidate} iniciando una votación. Se podría decir que los nodos en este algoritmo quieren a toda costa convertirse en líderes. Cabe destacar que el tiempo de \textit{timeout} del líder (\textit{leader heartbeat timeout}) debe ser inferior al tiempo de timeout del \textit{follower} (\textit{follower timeout}). Esto es necesario porque si no fuera así, el nodo líder no enviaría a tiempo mensajes \texttt{AppendEntries} a los nodos vecinos, llevándose a cabo una eleción de líder nueva en cada instante.
+
+Además de los mensajes de tipo \texttt{AppendEntries}, tambíen se pueden recibir mensajes de tipo \texttt{RequestVote}. Estos mensajes implican que el nodo acepta la petición de la votación respondiendo con \texttt{GrantVote} si no ha votado ya en el \textit{term} actual.
+
+Por otra parte, si un proceso \textit{follower} recibe mensajes de otro nodo con un \textit{term} superior, se convierte seguidor del nuevo \textit{term}.
+
+\subsection*{Estado \textit{candidate}}
+
+Cuando un nodo \textit{follower} inicia una votación, transita al estado \textit{candidate}, incrementando el \textit{term} actual y enviando mensajes \texttt{RequestVote} a los nodos vecinos. Cuando el nodo recibe $\frac{N + 1}{2}$ mensajes de tipo \texttt{GrantVote}, donde $N$ es el número de nodos vecinos, significa que ha ganado la eleción. En este escenario el nodo transita al estado \textit{leader}.
+
+Si en este estado no se reciben mensajes en un intervalo de tiempo inferior al ''\textit{follower timeout}'', entonces se inicia otra votació nueva incrementando el \textit{term}.
+
+En el caso de que un nodo en el estado \textit{candidate} recibe un mensaje de tipo \texttt{AppendEntries} o \texttt{RequestVote} con un \textit{term} superior, el nodo pasaría inmediatamente al estado \textit{follower}.
+
+\subsection*{Comentarios sobre el algoritmo}
+
+Sobre este algoritmo cabe destacar ciertos aspectos. En primer lugar, dado que cada nodo comienza una votación cada vez que deja de recibir mensajes del líder, es posible que dos nodos en estado \textit{follower} comienzen una votación simultáneamente. Dependiendo del número de nodos del sistema (por ejemplo 4 nodos), se podría dar el caso en el que dos nodos se disputan por ser el líder dado que no reciben suficientes votos, esto iniciaría otra votación y se repetiría el problema indefinidamente. Es por esto por lo que normalmente se establece aleatoriamente el tiempo ''\textit{follower timeout}''. Cuando cada nodo tiene este valor distinto, es muy poco probable que ocurra el escenario mencionado.
+
+Por otra parte se podría dar el caso en el que la red distribuida se divide en dos conjuntos de nodos. En este escenario uno de los conjuntos (que contiene el líder previo) seguiría una ejecuión normal. Sin embargo el otro conjunto elegiría un nuevo líder con un \textit{term} superior. Si se diera el caso en el que los dos conjuntos se conectaran otra vez, el último líder elegido pasaría a ser el líder del grupo, puesto que tiene un \textit{term} superior.
+
+
+
+
+
+
+
+
+
+
+
+
