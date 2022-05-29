@@ -225,13 +225,113 @@ func startElection(status *NodeStatus) {
 
 \section{Implementación del proceso \textit{capturador}}
 
-Como se describe en la sección~\ref{sec:arquitectura}, el proceso capturador debe capturar los mensajes de red que envía el nodo y reenviarlos al proceso manager. Además de esto, para permitir una comunicación bidireccional, debe ser capaz de interactuar con el proceso que ejecuta el algoritmo.
+Como se describe en la sección~\ref{sec:arquitectura}, el proceso capturador debe capturar los mensajes de red que envía el nodo y reenviarlos al proceso manager. Además de esto, para permitir una comunicación bidireccional, debe ser capaz de interactuar con el proceso que ejecuta el algoritmo. Cabe destacar además que la comunicación entre los nodos del algoritmo no necesariamente debe ser a través de un mismo puerto siempre. En la implementación de \textit{Raft} de este proyecto, se reciben siempre desde el mismo puerto, pero se desconocen los puertos desde los que se envían los mensajes.
 
-\begin{itemize}
-\item Explicar que no se pueden hacer sockets raw de python en windows
-\item Poner el codigo de sniffer.py
-\item Explicar los mensajes de ADD
-\end{itemize}
+Actualmente existen múltiples librerías de programación de captura de mensajes de red CITAR librerías. Sin embargo todas cuentan con una restricción, no se permite actualizar el filtro de paquetes de red dinámicamente. Esto es un inconveniente únicamente por la funcionalidad de añadir nodos vecinos durante la ejecución. Al añadir un nodo vecino, es necesario actualizar el filtro para incluir el puerto del nuevo nodo. Con las librerías existentes sería necesario detener la captura de mensajes, actualizar el filtro, y finalmente volver a comenzar la captura. Esta pausa en la escucha de mensajes de red puede suponer que no se capturen los mensajes en este intervalo de tiempo. Es por este motivo por el que se ha implementado un proceso capturador sin emplear librerías de este tipo.
+
+El lenguaje de programación escogido para implementar este módulo es \textit{Python}\cite{python}, dado que permite implementar las funcionalidades necesarias de una forma sencilla comparado con otros lenguajes. La implementación se compone de dos partes, una con la función \texttt{sniffer} que captura los mensajes de red y los retransmite al proceso \textit{manager}, y otra con la funcionalidad relacionada con arrancar el nodo del algoritmo y comunicarse con él. Más adeñante se detalla la implementación de estos módulos, comenzando por la función \texttt{sniffer}.
+
+Como se ha indicado anteriormente, las librerías existentes de captura de mensajes de red no permiten actualizar el fitro dinámicamente. Es por esto por lo que se ha implementado este módulo de captura personalizado. A continuación se muestra parte de la función \texttt{sniffer}.
+
+\begin{lstlisting}[language=Python]
+def sniffer():
+    conn = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(3))
+    
+    while True:
+        # Get new packet
+        raw_data, addr = conn.recvfrom(65535)
+        
+        # Get destination MAC, source MAC and ethernet protocol
+        dest_mac, src_mac, eth_proto = struct.unpack('! 6s 6s H', raw_data[:14])
+        eth_proto = socket.htons(eth_proto)
+        data = raw_data[14:]
+
+        # If packet is IPv4
+        if eth_proto == 8:
+            version_header_length = data[0]
+            version = version_header_length >> 4
+            header_length = (version_header_length & 15) * 4
+            ttl, ip_proto, src_ip, target_ip = struct.unpack('! 8x B B 2x 4s 4s', data[:20])
+            data = data[header_length:]
+
+            # If TCP protocol
+            if ip_proto == 6:
+                src_port, dest_port, sequence, ack, offset_reserved_flags = struct.unpack('! H H L L H', data[:14])
+                offset = (offset_reserved_flags >> 12) * 4
+                flag_urg = (offset_reserved_flags & 32) >> 5
+                flag_ack = (offset_reserved_flags & 16) >> 4
+                flag_psh = (offset_reserved_flags & 8) >> 3
+                flag_rst = (offset_reserved_flags & 4) >> 2
+                flag_syn = (offset_reserved_flags & 2) >> 1
+                flag_fin = offset_reserved_flags & 1
+                data = data[offset:]
+
+                # If packet has content for the application
+                if flag_psh == 1 and dest_port in ports:
+                    captured_msg = json.loads(data.decode())
+
+                    captured_msg["SrcPort"] = captured_msg["SenderPort"]
+                    captured_msg["SrcIp"] = "localhost"
+                    captured_msg["DstPort"] = dest_port
+                    captured_msg["DstIp"] = "localhost"
+
+                    app_server.sendto(bytes(json.dumps(captured_msg), encoding='utf-8'), manager_addr)
+\end{lstlisting}
+
+Al principio se crea un \textit{socket} de red de tipo \texttt{SOCK\_RAW}, que recibe mensajes a nivel de protocolo ethernet. Seguidamente se comienza un bucle infinito que ejecuta lo siguiente:
+
+\begin{enumerate}
+\item Guarda un nuevo mensaje en un buffer de máximo tamaño.
+\item Obtiene las direcciones MAC origen y destino, y el protocolo ethernet.
+\item Comprueba si el paquete ha sido enviado desde el protocolo IPv4.
+\item Extrae la información de la cabecera del paquete IP. Nótese que es necesario recurrir a operaciones de desplazamiento de bits dado que Python no permite indexar un byte a nivel de bit.
+\item Comprueba si el paquete se ha enviado con el protocolo TCP.
+\item Se extraen los datos de la cabecera TCP, entre los cuales se encuentran el \textit{flag} PSH, el puerto destino, el tamaño de la cabecera y el contenido del paquete.
+\item Se comprueba si el puerto destino está en la lista de puertos de los nodos vecinos, y si el \textit{flag} PSH está a 1. Este \textit{flag} indica si el mensaje se envía al nivel de aplicación, es decir, indica si contiene datos de la aplicación.
+\item Se envía un mensaje al proceso \textit{manager} con la información del mensaje capturado.
+\end{enumerate}
+
+Cabe destacar que la librería \texttt{socket} de Python no incluye inguna definición de sockets de este tipo para el sistema operativo Windows \cite{pythonsocket}. Además de este aspecto, dado que el socket se ha declarado para recibir todos los mensajes \textit{ethernet}, es necesario ejecutar el código como superusiario.
+
+En cuanto a la gestión del proceso que ejecuta el algoritmo, se ha planteado la siguiente solución. Se ejecuta el proceso en un proceso hijo, de tal forma que se tiene acceso a distintos recursos, por ejemplo la entrada y la salida estándar. El código simplificado se muestra a continuación:
+
+\begin{lstlisting}[language=Python]
+process = subprocess.Popen('go run ./node/node.go', text=False, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=False, shell=True)
+
+while process.poll() is None:
+    line = process.stdout.readline().decode()
+    if line != "":
+        print(">>> ", line, sep='', end='')
+
+process.wait()
+print("return_code:", process.returncode)
+\end{lstlisting}
+
+La primera línea inicializa la ejecución del algoritmo Raft, indicando que se quiere acceder a la salida y entrada estándar. Seguidamente se comienza un bucle que imprime todos los mensajes que el proceso hijo muestra por la salida estándar. Este termina cuando el proceso hijo escribe en la salida estándar el carácter EOF (final de fichero). Finalmente se espera a que termine el proceso hijo para imprimir el valor de terminación.
+
+Por último, queda por explicar la forma en la que el proceso \textit{manager} se comunica con el proceso que ejecuta el algoritmo. Esto se consigue con la función \texttt{udp\_listener} (no confundir con la función \texttt{listener} del algoritmo Raft).
+
+\begin{lstlisting}[language=Python]
+def udp_listener(process, node_port):
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as listener:
+        listener.bind(("", 0)) # random port
+        while True:
+            msg_raw, addr = listener.recvfrom(2048)
+            msg = json.loads(msg_raw.decode())
+            final_msg = b'%s\n' % bytes(msg["args"], encoding='utf-8')
+            
+            process.stdin.write(final_msg)
+            process.stdin.flush()
+            
+            if msg["type"] == "ADD":
+                addPort(int(getPeerPort(final_msg)))
+\end{lstlisting}
+
+Como se puede observar, al comenzar se declara un socket de tipo UPD asignando un puerto aleatorio. En esta implementación se ha escogido el protocolo UDP para la comunicación con el proceso \textit{manager}. Se podría haber empleado cualquier otro tipo de protocolo de envío de mensajes de red. Sin embargo se ha escogido el protocolo UDP puesto que es un protocolo más rápido que TCP. La velocidad de transmisión de mensajes puede reducir la latencia en la visualización de mensajes en la interfaz.
+
+El resto de la función consiste en un bucle infinito que recibe mensajes del proceso \textit{manager} y los escribe en la entrada estándar del proceso hijo (que ejecuta el algoritmo). Por otra parte, si el mensaje recibido de la interfaz indica que se quiere agregar un nuevo nodo, entonces se agrega el puerto a la lista de puertos que emplea el filtro de la función \texttt{sniffer}, descrita anteriormente.
+
+Para finalizar la descripción de este módulo, 
 
 \section{Descripción del cliente}
 
@@ -247,14 +347,20 @@ A continuación se describe la implementación del cliente. A modo de recordator
 
 Por otra parte, la interfaz no ha sido implementará como una aplicación \textit{web} convencional, si no como una aplicación de \textit{electron}. Esto es imprescindible puesto que desde la versión \textit{web} de \textit{JavaScript} no es posible enviar mensajes de red, por motivos de seguridad. \textit{Electron}\cite{electron} es un \textit{framework} que permite desarrollar aplicaciones de escritorio multiplataforma empleando recursos de desarrollo \textit{web}, por ejemplo \textit{HTML}, \textit{CSS} y \textit{JavaScript}.
 
-En cuanto a la librería de visualización de grafos, se ha escogido \textit{Vis.js}\cite{visjs}, puesto que además de ser gratuita y de código abierto, permite visualizar animaciones que recorren los vértices del grafo. Estas animaciones se emplean para representar el tráfico de red entre los nodos del algoritmo. En lo restante de este apartado se detalla el funcionamiento de los botones de la interfaz, y cómo interactúa el cliente con el proceso \textit{capturador}. La interfaz final de la aplicación puede apreciarse en la imagen de la figura FIGURA.
+En cuanto a la librería de visualización de grafos, se ha escogido \textit{Vis.js}\cite{visjs}, puesto que además de ser gratuita y de código abierto, permite visualizar animaciones que recorren los vértices del grafo. Estas animaciones se emplean para representar el tráfico de red entre los nodos del algoritmo. En lo restante de este apartado se detalla el funcionamiento de los botones de la interfaz, y cómo interactúa el cliente con el proceso \textit{capturador}. La interfaz final de la aplicación puede apreciarse en la imagen de la figura~\ref{fig:dave1}.
 
-\begin{figure}[h]
-  \centering
-  \includegraphics[width=0.9\linewidth]{imagenes/dave1}
-  \caption{Captura de pantalla de la interfaz}
-  \label{fig:dave1}
-\end{figure}
+%\begin{figure}[h]
+%  \centering
+%  \includegraphics[width=0.9\linewidth]{imagenes/dave1}
+%  \caption{Captura de pantalla de la interfaz}
+%  \label{fig:dave1}
+%\end{figure}
+{
+\centering
+\includegraphics[width=0.9\linewidth]{imagenes/dave1}
+\captionof{figure}{Captura de pantalla de la interfaz}
+\label{fig:dave1}
+}
 
 Como se puede observar, en la parte izquierda de la pantalla se localizan los controles, y en la derecha el marco donde se dibujará el grafo del algoritmo. Los controles se dividen en dos partes, una que controla los nodos, y otra que controla el proceso \textit{manager}. Como se ha descrito anteriormente, el proceso capturador recibe mensajes a través de un \textit{socket} de red, al mismo tiempo que los retransmite al proceso que ejecuta el algoritmo. Estos mensajes, se envían desde la interfaz pulsando alguno de los siguientes botones:
 
@@ -366,66 +472,148 @@ En este apartado se demuestra la funcionalidad completa de la aplicación con un
 
 Una vez incializadas se introduce en el campo asociado con el botón ''\textit{Add node}'' de la interfaz, una a una cada dirección de cada instancia. El proceso capturador muestra convenientemente, por la salida estándar, la dirección del nodo con el formato adecuado para que el usuario únicamente tenga que copiar y pegar la información, sin necesidad de escribir manualmente. El resultado de insertar varios nodos en el sistema de visualización es se puede apreciar en la captura de pantalla de la figura~\ref{fig:ui1}.
 
-\begin{figure}[h]
-  \centering
-  \includegraphics[width=0.9\linewidth]{imagenes/ui1}
-  \caption{Resultado de añadir varios nodos en la visualización}
-  \label{fig:ui1}
-\end{figure}
+%\begin{figure}[h]
+%  \centering
+%  \includegraphics[width=0.9\linewidth]{imagenes/ui1}
+%  \caption{Resultado de añadir varios nodos en la visualización}
+%  \label{fig:ui1}
+%\end{figure}
+
+{
+\centering
+\includegraphics[width=0.9\linewidth]{imagenes/ui1}
+\captionof{figure}{Resultado de añadir varios nodos en la visualización}
+\label{fig:ui1}
+}
 
 Como se puede observar, se desconoce el \texttt{term} de cada nodo. Esto se debe a que la visualización del algoritmo únicamente conoce el estado a partir del contenido de los mensajes que captura el proceso capturador. Puesto que todavía no se han enviado mensajes, esta información es desconodica por el momento. En las figuras~\ref{fig:ui2},~\ref{fig:ui3} y~\ref{fig:ui4} se muestra el procedimiento seguido para añadir una nueva conexión.
 
 En primer lugar, se pulsa en el botón de edición para acceder al menú de conexiones, esto se puede observar en la figura~\ref{fig:ui2}. Seguidamente se pulsa el botón ''\textit{Add Connection}''. A continuación se pulsa en un nodo y, manteniendo la pulsación, se arrastra el puntero hasta otro nodo donde se suelta (Figura~\ref{fig:ui3}). El resultado son dos vértices entre ambos nodos, cada uno simboliza la conexión en un sentido. El resultado final de este paso se muestra en la figura~\ref{fig:ui4}. A continuación se sigue el mismo procedimiento para añadir las conexiones restantes que se deseen. Un ejemplo de configuración final se puede apreciar en la figura~\ref{fig:ui5}.
 
-\begin{figure}[p]
-  \centering
-  \includegraphics[width=0.9\linewidth]{imagenes/ui2}
-  \caption{Menú de conexiones}
-  \label{fig:ui2}
-\end{figure}
+%\begin{figure}[p]
+%  \centering
+%  \includegraphics[width=0.9\linewidth]{imagenes/ui2}
+%  \caption{Menú de conexiones}
+%  \label{fig:ui2}
+%\end{figure}
+{
+\centering
+\includegraphics[width=0.9\linewidth]{imagenes/ui2}
+\captionof{figure}{Menú de conexiones}
+\label{fig:ui2}
+}
 
-\begin{figure}[p]
-  \centering
-  \includegraphics[width=0.9\linewidth]{imagenes/ui3}
-  \caption{Proceso de crear una nueva conexión}
-  \label{fig:ui3}
-\end{figure}
+%\begin{figure}[p]
+%  \centering
+%  \includegraphics[width=0.9\linewidth]{imagenes/ui3}
+%  \caption{Proceso de crear una nueva conexión}
+%  \label{fig:ui3}
+%\end{figure}
+{
+\centering
+\includegraphics[width=0.9\linewidth]{imagenes/ui3}
+\captionof{figure}{Proceso de crear una nueva conexión}
+\label{fig:ui3}
+}
 
-\begin{figure}[p]
-  \centering
-  \includegraphics[width=0.9\linewidth]{imagenes/ui4}
-  \caption{Resultado de añadir una nueva conexión}
-  \label{fig:ui4}
-\end{figure}
+%\begin{figure}[p]
+%  \centering
+%  \includegraphics[width=0.9\linewidth]{imagenes/ui4}
+%  \caption{Resultado de añadir una nueva conexión}
+%  \label{fig:ui4}
+%\end{figure}
+{
+\centering
+\includegraphics[width=0.9\linewidth]{imagenes/ui4}
+\captionof{figure}{Resultado de añadir una nueva conexión}
+\label{fig:ui4}
+}
 
-\begin{figure}[p]
-  \centering
-  \includegraphics[width=0.9\linewidth]{imagenes/ui5}
-  \caption{Resultado de añadir todas las conexiones}
-  \label{fig:ui5}
-\end{figure}
+%\begin{figure}[p]
+%  \centering
+%  \includegraphics[width=0.9\linewidth]{imagenes/ui5}
+%  \caption{Resultado de añadir todas las conexiones}
+%  \label{fig:ui5}
+%\end{figure}
+{
+\centering
+\includegraphics[width=0.9\linewidth]{imagenes/ui5}
+\captionof{figure}{Resultado de añadir todas las conexiones}
+\label{fig:ui5}
+}
 
 Ahora que se han añadido los nodos y conexiones deseados, se puede proceder a inciar la ejecución de cada uno de los nodos. Para ello se pulsará sobre un nodo para seleccionarlo, y posteriormente se pulsará el botón ''\textit{Start selected nodes}''. Seguidamente se seleccionarán los nodos restantes y se pulsará el mismo botón de nuevo. Esto provocará que el primer nodo sea líder puesto que comenzará la ejecución antes que los demás. A partir de este momento, los mensajes entre nodos se mostrarán como círculos azules recorriendo los vértices. Como es lógico, en la imagen no se muestra la animación. Cabe destacar que el campo \texttt{term} cuyo valor antes era desconocido, ahora se conoce puesto que se extrae de los mensajes. El resultado final se puede apreciar en la figura~\ref{fig:ui6}.
 
-\begin{figure}[p]
-  \centering
-  \includegraphics[width=0.9\linewidth]{imagenes/ui6}
-  \caption{Visualización del tránsito de mensajes}
-  \label{fig:ui6}
-\end{figure}
+%\begin{figure}[p]
+%  \centering
+%  \includegraphics[width=0.9\linewidth]{imagenes/ui6}
+%  \caption{Visualización del tránsito de mensajes}
+%  \label{fig:ui6}
+%\end{figure}
+{
+\centering
+\includegraphics[width=0.9\linewidth]{imagenes/ui6}
+\captionof{figure}{Visualización del tránsito de mensajes}
+\label{fig:ui6}
+}
 
 Cabe destacar que no es necesario añadir todos los nodos y las conexiones antes de arrancar la ejecución de estos. Se pueden añadir sin problema durante la ejecución. Un ejemplo de esto se muestra en las figuras~\ref{fig:ui7} y~\ref{fig:ui8}, donde se añade otro nodo y se conecta a uno de los nodos existentes.
 
-\begin{figure}[p]
-  \centering
-  \includegraphics[width=0.9\linewidth]{imagenes/ui7}
-  \caption{Añadir nodo nuevo durante la ejecución de otros nodos}
-  \label{fig:ui7}
-\end{figure}
+%\begin{figure}[p]
+%  \centering
+%  \includegraphics[width=0.9\linewidth]{imagenes/ui7}
+%  \caption{Añadir nodo nuevo durante la ejecución de otros nodos}
+%  \label{fig:ui7}
+%\end{figure}
+{
+\centering
+\includegraphics[width=0.9\linewidth]{imagenes/ui7}
+\captionof{figure}{Añadir nodo nuevo durante la ejecución de otros nodos}
+\label{fig:ui7}
+}
 
-\begin{figure}[p]
-  \centering
-  \includegraphics[width=0.9\linewidth]{imagenes/ui8}
-  \caption{Visualización del tránsito de mensajes con el nuevo nodo}
-  \label{fig:ui8}
-\end{figure}
+%\begin{figure}[p]
+%  \centering
+%  \includegraphics[width=0.9\linewidth]{imagenes/ui8}
+%  \caption{Visualización del tránsito de mensajes con el nuevo %nodo}
+%  \label{fig:ui8}
+%\end{figure}
+{
+\centering
+\includegraphics[width=0.9\linewidth]{imagenes/ui8}
+\captionof{figure}{Visualización del tránsito de mensajes con el nuevo nodo}
+\label{fig:ui8}
+}
+
+\section{Comentarios sobre la implementación}
+
+Como se ha descrito en la introducción, uno de los objetivos de este proyecto es proporcionar una herramienta que permita visualizar algoritmos distribuidos, permitiendo la posibilidad de intercambiar el algoritmo a visualizar. Tanto la arquitectura propuesta como la implementación permiten la visualización de otros algoritmos, sin embargo hay ciertos aspectos que es necesario tener en cuenta. No existe ningun formato universal de mensajes entre nodos de cualquier algoritmo distribuido, por tanto hay ciertos parámetros que se tienen que modificar para admitir el nuevo algoritmo.
+
+\begin{itemize}
+\item En primer lugar, se debe definir el formato de los mensajes para modificar debidamente las funcionalidades de la interfaz que muestran información sobre estos. Estas modificaciones se harían en el proceso \textit{manager}, dado que es el proceso que modifica la visualización del algoritmo.
+
+\item También se tiene que modificar el proceso capturador de tal forma que se comunica de la forma adecuada con el nuevo algoritmo. En el caso de esta implementación, el algoritmo se controla por la entrada estándar, pero podría darse el caso en el control se llevase a cabo desde un dispositivo o desde un socket.
+\end{itemize}
+
+En lo restante de esta sección se comentarán tanto los requistos para ejecutar el sistema, como las dependencias de cada módulo.
+
+\subsection{Dependencias}
+
+Para las máquinas que ejecuten el algoritmo, se requieren las siguientes dependencias:
+
+\begin{itemize}
+\item Go - versión 1.17+. Para soportar la ejecución del algoritmo Raft.
+\item Python - versión 3.9+. Para ejecutar el proceso \textit{capturador}.
+\item Sistema operativo: basado en Linux. Esta restricción viene de que la función \texttt{sniffer} del proceso \textit{capturador} requiere componentes de la librería \texttt{socket} de Python que no están disponibles en otro tipo de sistemas operativos.
+\end{itemize}
+
+En cuanto a la ejecución de la interfaz, se requieren las siguientes dependencias:
+
+\begin{itemize}
+\item Node.js.
+\item \textit{electron}. Este paquete se puede instalar con el administrador de paquetes de Node.js, con el mandato \texttt{npm install --save-dev electron}.
+\end{itemize}
+
+\subsection{Ejecución del entorno}
+
+La ejecución del entorno se divide en dos partes. Por una parte la ejecución de las instancias del proceso \textit{capturador}, y por  otra la ejecución de la aplicación de escritorio. Cada instancia del proceso capturador se inicia ejecutando el mandato \texttt{python sniffer.py} desde el directorio raíz del proyecto. La interfaz se puede ejecutar de dos formas: o bien desde el ejecutable generado por \textit{electron}, o con el mandato \texttt{npm run start} desde el directorio raíz de la implementación de la interfaz.
