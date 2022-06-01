@@ -386,7 +386,7 @@ Más adelante, en el siguiente apartado, se explica la funcionalidad del proceso
 
 \section{Implementación del \textit{manager}}
 
-Como se ha descrito anteriormente, el proceso \textit{manager} debe contener toda la funcionalidad relacionada con recibir mensajes de todos los procesos capturadores, y modificar la visualización de acuerdo con el origen, destino y contenido de estos. Puesto que es un proceso que debe interactuar con la visualización de la red que se visualiza, es necesario que sea implementado junto con la interfaz para tener acceso a las variables del programa necesarias.
+Como se ha descrito anteriormente, el proceso \textit{manager} debe contener toda la funcionalidad relacionada con recibir mensajes de todos los procesos capturadores, y modificar la visualización de acuerdo con el origen, destino y contenido de estos. Puesto que es un proceso que debe interactuar con la representación de la red que se visualiza, es necesario que sea implementado junto con la interfaz para tener acceso a las variables del programa necesarias.
 
 En \textit{electron} se puede implementar fácilmente un proceso servidor con el módulo \texttt{dgram}, que permite crear y manejar \textit{sockets} UDP. La implementación básica de un servidor de este tipo se muestra a continuación:
 
