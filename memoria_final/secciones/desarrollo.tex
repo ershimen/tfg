@@ -1,11 +1,11 @@
 \chapter{Desarrollo}
 
-A continuación se explicará la implementación detallada de cada uno de los componentes de la arquitectura. Puesto que el algoritmo a visualizar no es el contenido principal de este proyecto, se ha escogido uno cuya complejidad no sea excesiva. La elección ha sido el algoritmo \textit{Raft} \cite{10.5555/2643634.2643666} principalmente porque es muy adecuado para comprobar el funcionamiento de la interfaz. A diferencia de otros algoritmos que envían mensajes hasta alcanzar un objetivo, en Raft se envían mensajes indefinidamente. Además de este aspecto, también es un algoritmo no demasiado complejo de comprender e implementar.
+A continuación se explicará la implementación detallada de cada uno de los componentes de la arquitectura. Puesto que el algoritmo a visualizar no es el contenido principal de este proyecto, se ha escogido uno cuya complejidad no sea excesiva. La elección ha sido el algoritmo \textit{Raft} \cite{10.5555/2643634.2643666} principalmente porque es muy adecuado para comprobar el funcionamiento de la interfaz. A diferencia de otros algoritmos que envían mensajes hasta alcanzar un objetivo, en \textit{Raft} se envían mensajes indefinidamente. Además de este aspecto, también es un algoritmo no demasiado complejo de comprender e implementar.
 
-\section{Implementación del algoritmo \texttt{Raft}}
+\section{Implementación del algoritmo \textit{Raft}}
 \label{sec:raft}
 
-Para la implementación del algoritmo Raft, se ha escogido el lenguaje de programación \textit{Go} \cite{go}, que proporciona numerosas comodidades y ventajas a la hora de programar aplicaciones distribuidas. Por otra parte, la propuesta original de \textit{Raft} \cite{raft1} sugiere que la comunicación entre los nodos se implemente mediante llamadas a procedimientos remotos (RPC) puesto que se elimina la complejidad que supone enviar y recibir mensajes con \textit{sockets}. Sin embargo, en esta implementación, se ha diseñado la comunicación con mensajes tradicionales TCP. Además de que actualmente existen numerosas implementaciones del algoritmo empleando llamadas a procedimientos remotos \cite{raftetcd}\cite{rafteliben}, la ventaja de los mensajes TCP es que es mucho más claro el proceso de envío y recepción de los mensajes.
+Para la implementación del algoritmo \textit{Raft}, se ha escogido el lenguaje de programación \textit{Go} \cite{go}, que proporciona numerosas comodidades y ventajas a la hora de programar aplicaciones distribuidas. Por otra parte, la propuesta original de \textit{Raft} \cite{raft1} sugiere que la comunicación entre los nodos se implemente mediante llamadas a procedimientos remotos (RPC) puesto que se elimina la complejidad que supone enviar y recibir mensajes con \textit{sockets}. Sin embargo, en esta implementación, se ha diseñado la comunicación con mensajes tradicionales TCP. Además de que actualmente existen numerosas implementaciones del algoritmo empleando llamadas a procedimientos remotos \cite{raftetcd}, \cite{rafteliben}, la ventaja de los mensajes TCP es que es mucho más claro el proceso de envío y recepción de los mensajes.
 
 Además de este aspecto, la implementación incluye la elección de líder completa y la replicación de \textit{log} parcial. La replicación no está completa puesto que esta implementación tiene como objetivo visualizar los mensajes relacionados con el algoritmo, y no el contenido de los \textit{logs} replicados. Por otra parte, la implementación está diseñada para interactuar con cada nodo mediante la entrada estándar del proceso. La función principal de la implementación (\textit{Main}) contiene la lógica necesaria para interactuar con los procesos en segundo plano que ejecutan el algoritmo. Las funcionalidades o comandos que incluye esta implementación son las siguientes:
 
@@ -18,9 +18,9 @@ Además de este aspecto, la implementación incluye la elección de líder compl
 \item\texttt{PEERS}: Imprime la lista de nodos vecinos.
 \end{itemize}
 
-A continuación se descibe la implementación de cada uno de los componentes del algoritmo. La descripción simplificada de \textit{Raft} puede leerse en el Anexo, o en el artículo original \cite{raft1} (versión completa y detallada). Por otra parte, sólo se muestran partes del código simplificadas que no contienen control de errores.
+A continuación se describe la implementación de cada uno de los componentes del algoritmo. La descripción simplificada de \textit{Raft} puede leerse en el Anexo, o en el artículo original \cite{raft1} (versión completa y detallada). Por otra parte, sólo se muestran partes del código simplificadas que no contienen control de errores.
 
-Cuando un nodo comienza a ejecutar el algoritmo, comienzan a ejecutarse dos procesos secundarios. El primer proceso ejecuta la función \texttt{raft}, que contiene la mayoría del funcionamiento del algoritmo, mientras que el segundo ejecuta la función \texttt{listener}, que es la encargada de recibir mensajes del \textit{socket} TCP. La comunicación entre estas funciones se lleva a cabo mendiante canales de \textit{Go} \cite{gochannels}, una de las mejores funcionalidades del lenguaje, que son similares a los \textit{pipes} de Linux. El proceso que ejecuta la función \texttt{raft} recibe mensajes de este canal, y en función del estado del nodo y otros factores, actúa de una manera u otra. Por otra parte la función \texttt{listener}, entre otras, envía mensajes al canal.
+Cuando un nodo comienza a ejecutar el algoritmo, comienzan a ejecutarse dos procesos secundarios. El primer proceso ejecuta la función \texttt{raft}, que contiene la mayoría del funcionamiento del algoritmo, mientras que el segundo ejecuta la función \texttt{listener}, que es la encargada de recibir mensajes del \textit{socket} TCP. La comunicación entre estas funciones se lleva a cabo mediante canales de \textit{Go} \cite{gochannels}, una de las mejores funcionalidades del lenguaje, que son similares a los \textit{pipes} de Linux. El proceso que ejecuta la función \texttt{raft} recibe mensajes de este canal, y en función del estado del nodo y otros factores, actúa de una manera u otra. Por otra parte la función \texttt{listener}, entre otras, envía mensajes al canal.
 
 \subsection{Estado del algoritmo}
 
@@ -98,7 +98,7 @@ func responseHandler(conn net.Conn, status *NodeStatus) {
 }
 \end{lstlisting}
 
-Esta función recibe del \textit{socket} un mensaje, lo deserializa a un \texttt{struct} de \textit{Go} \cite{gostructs} y envía este objeto al canal.
+Esta función recibe del \textit{socket} un mensaje, lo \textit{deserializa} a un \texttt{struct} de \textit{Go} \cite{gostructs} y envía este objeto al canal.
 
 \subsection{Implementación de \texttt{raft}}
 
@@ -167,16 +167,16 @@ Como se puede observar, esta función altera el estado del algoritmo en función
 \begin{itemize}
 \item Cuando el mensaje que recibe es de tipo \texttt{requestVote}, significa que algún otro nodo ha iniciado una votación. En este escenario, el nodo se convertirá en seguidor si el nuevo \textit{term} es superior, y si no ha votado todavía en el \textit{term} actual.
 
-\item En el caso de que el mensaje recibido sea de tipo \texttt{grantVote}, significa que el propio nodo ha inciado una votación anteriormente, y algún otro nodo ha aceptado el voto. Si el nodo está en el estado \textit{follower}, se ignora la petición, puesto que la votación se ha terminado y no se ha conseguido el liderazgo. En el caso en el que el estado del nodo sea \textit{candidate}, hay que comprobar si el voto aceptado se corresponde con la votación actual. En el caso de que lo sea, el nodo se convierte en líder ejecutando la función \texttt{leaderHeartbeats} si ha recibido suficientes votos. En el caso de que el estado sea \textit{leader}, se ignora el mensaje, puesto que ya se ha conseguido el liderazgo.
+\item En el caso de que el mensaje recibido sea de tipo \texttt{grantVote}, significa que el propio nodo ha iniciado una votación anteriormente, y algún otro nodo ha aceptado el voto. Si el nodo está en el estado \textit{follower}, se ignora la petición, puesto que la votación se ha terminado y no se ha conseguido el liderazgo. En el caso en el que el estado del nodo sea \textit{candidate}, hay que comprobar si el voto aceptado se corresponde con la votación actual. En el caso de que lo sea, el nodo se convierte en líder ejecutando la función \texttt{leaderHeartbeats} si ha recibido suficientes votos. En el caso de que el estado sea \textit{leader}, se ignora el mensaje, puesto que ya se ha conseguido el liderazgo.
 
-\item En el caso de que se reciba un mensaje de tipo \texttt{appendEntries}, el nodo se convierte en seguidor si el \texttt{term} del mensaje es superior al term actual.
+\item En el caso de que se reciba un mensaje de tipo \texttt{appendEntries}, el nodo se convierte en seguidor si el \textit{term} del mensaje es superior al \textit{term} actual.
 
 \item Si el tipo del mensaje es \texttt{followerTimeout}, significa que la función \texttt{listener} no ha recibido una nueva conexión en el tiempo del \textit{timeout}. Este escenario implica que el nodo inicie una votación (función \texttt{startElection}) en el caso de que sea seguidor o candidato.
 \end{itemize}
 
 \subsection{Implementación de \texttt{leaderHeartbeats}}
 
-La función \texttt{leaderHeartbeats} se ejecuta cuando el estado del nodo es \textit{leader}. El objetivo es enviar periódicamente mensajes de tipo \texttt{appendEntries} a los nodos vecinos para que continúen en el estado \textit{follower}. Sólamente termina cuando el estado del nodo deja de ser \textit{leader}. 
+La función \texttt{leaderHeartbeats} se ejecuta cuando el estado del nodo es \textit{leader}. El objetivo es enviar periódicamente mensajes de tipo \texttt{appendEntries} a los nodos vecinos para que continúen en el estado \textit{follower}. Solamente termina cuando el estado del nodo deja de ser \textit{leader}. 
 
 \begin{lstlisting}[language=go]
 func leaderHeartbeats(status *NodeStatus) {
@@ -229,13 +229,13 @@ func startElection(status *NodeStatus) {
 
 Como se describe en la sección~\ref{sec:arquitectura}, el proceso capturador debe capturar los mensajes de red que envía el nodo y reenviarlos al proceso manager. Además de esto, para permitir una comunicación bidireccional, debe ser capaz de interactuar con el proceso que ejecuta el algoritmo. Cabe destacar además que la comunicación entre los nodos del algoritmo no necesariamente debe ser a través de un mismo puerto siempre. En la implementación de \textit{Raft} de este proyecto, se reciben siempre desde el mismo puerto, pero se desconocen los puertos desde los que se envían los mensajes.
 
-Actualmente existen múltiples librerías de programación de captura de mensajes de red \cite{libcap}\cite{pyshark}\cite{pypcap}. Sin embargo todas cuentan con una restricción, no se permite actualizar el filtro de paquetes de red dinámicamente. Esto es un inconveniente únicamente por la funcionalidad de añadir nodos vecinos durante la ejecución. Al añadir un nodo vecino, es necesario actualizar el filtro para incluir el puerto del nuevo nodo para capturar los mensajes enviados a ese nodo. Con las librerías existentes sería necesario detener la captura de mensajes, actualizar el filtro, y finalmente volver a comenzar la captura. Esta pausa en la escucha de mensajes de red puede suponer que no se capturen los mensajes en este intervalo de tiempo. Es por este motivo por el que se ha implementado un proceso capturador sin emplear librerías de este tipo.
+Actualmente existen múltiples librerías de programación de captura de mensajes de red, algunos ejemplos son \cite{libcap}, \cite{pyshark}, \cite{pypcap}. Sin embargo todas cuentan con una restricción, no se permite actualizar el filtro de paquetes de red dinámicamente. Esto es un inconveniente únicamente por la funcionalidad de añadir nodos vecinos durante la ejecución. Al añadir un nodo vecino, es necesario actualizar el filtro para incluir el puerto del nuevo nodo para capturar los mensajes enviados a ese nodo. Con las librerías existentes sería necesario detener la captura de mensajes, actualizar el filtro, y finalmente volver a comenzar la captura. Esta pausa en la escucha de mensajes de red puede suponer que no se capturen los mensajes en este intervalo de tiempo. Es por este motivo por el que se ha implementado un proceso capturador sin emplear librerías de este tipo.
 
-El lenguaje de programación escogido para implementar este módulo es \textit{Python}\cite{python}, dado que permite implementar las funcionalidades necesarias de una forma sencilla comparado con otros lenguajes. La implementación se compone de dos partes, una con la función \texttt{sniffer} que captura los mensajes de red y los retransmite al proceso \textit{manager}, y otra con la funcionalidad relacionada con arrancar el nodo del algoritmo y comunicarse con él. Más adeñante se detalla la implementación de estos módulos, comenzando por la función \texttt{sniffer}.
+El lenguaje de programación escogido para implementar este módulo es \textit{Python} \cite{python}, dado que permite implementar las funcionalidades necesarias de una forma sencilla comparado con otros lenguajes. La implementación se compone de dos partes, una con la función \texttt{sniffer} que captura los mensajes de red y los retransmite al proceso \textit{manager}, y otra con la funcionalidad relacionada con arrancar el nodo del algoritmo y comunicarse con él. Más adelante se detalla la implementación de estos módulos, comenzando por la función \texttt{sniffer}.
 
 \subsection{Captura de mensajes}
 
-Como se ha indicado anteriormente, las librerías existentes de captura de mensajes de red no permiten actualizar el fitro dinámicamente. Es por esto por lo que se ha implementado este módulo de captura personalizado. A continuación se muestra parte de la función \texttt{sniffer}.
+Como se ha indicado anteriormente, las librerías existentes de captura de mensajes de red no permiten actualizar el filtro dinámicamente. Es por esto por lo que se ha implementado este módulo de captura personalizado. A continuación se muestra parte de la función \texttt{sniffer}.
 
 \begin{lstlisting}[language=Python]
 def sniffer():
@@ -295,7 +295,7 @@ Al principio se crea un \textit{socket} de red de tipo \texttt{SOCK\_RAW}, que r
 \item Se envía un mensaje al proceso \textit{manager} con la información del mensaje capturado.
 \end{enumerate}
 
-Cabe destacar que la librería \texttt{socket} de \textit{Python} no incluye inguna definición de sockets de este tipo para el sistema operativo \textit{Windows} \cite{pythonsocket}. Además de este aspecto, dado que el socket se ha declarado para recibir todos los mensajes \textit{ethernet}, es necesario ejecutar el código como superusiario.
+Cabe destacar que la librería \texttt{socket} de \textit{Python} no incluye ninguna definición de sockets de este tipo para el sistema operativo \textit{Windows} \cite{pythonsocket}. Además de este aspecto, dado que el socket se ha declarado para recibir todos los mensajes \textit{ethernet}, es necesario ejecutar el código como \textit{superusuario}.
 
 \subsection{Interacción con el proceso del algoritmo}
 
@@ -344,16 +344,16 @@ El resto de la función consiste en un bucle infinito que recibe mensajes del pr
 A continuación se describe la implementación del cliente. A modo de recordatorio la interfaz debe ser capaz de visualizar tanto los nodos del algoritmo como los mensajes que se envían en tiempo real, permitiendo al usuario interactuar de distintas formas. Para visualizar una red distribuida, sería necesario representar en un grafo las máquinas como nodos, y las conexiones como vértices. Las funcionalidades de representar estos elementos en pantalla y ofrecer la posibilidad arrastrar nodos para cambiar la distribución en pantalla, entre otras, son bastante complejas de implementar y no forman parte de los objetivos de este proyecto. Es por esto por lo que la elección del lenguaje de implementación se ha visto marcado por la existencia de alguna librería de programación que implemente estas funcionalidades. El lenguaje escogido es \textit{JavaScript} por los siguientes motivos:
 
 \begin{itemize}
-\item \textit{JavaScript}\cite{js} es el lenguaje que cuenta con más librerías a fecha de escritura \cite{libraries}, por tanto es más probable que contenga una que cumpla con los requisitos.
+\item \textit{JavaScript} \cite{js} es el lenguaje que cuenta con más librerías a fecha de escritura \cite{libraries}, por tanto es más probable que contenga una que cumpla con los requisitos.
 
 \item Además de ser el lenguaje con más librerías, es empleado extensamente en el desarrollo web, y por tanto está capacitado para implementar la lógica necesaria para controlar la interfaz de usuario.
 
-\item Existen diferentes librerías que cumplen con los requisitos mencionados para representar grafos, algunos ejemplos son \cite{visjs}\cite{gojs}\cite{10.1093/bioinformatics/btv557}.
+\item Existen diferentes librerías que cumplen con los requisitos mencionados para representar grafos, algunos ejemplos son \cite{visjs}, \cite{gojs}, \cite{10.1093/bioinformatics/btv557}.
 \end{itemize}
 
 Por otra parte, la interfaz no ha sido implementará como una aplicación \textit{web} convencional, si no como una aplicación de \textit{electron}. Esto es imprescindible puesto que desde la versión \textit{web} de \textit{JavaScript} no es posible enviar mensajes de red, por motivos de seguridad. \textit{Electron}\cite{electron} es un \textit{framework} que permite desarrollar aplicaciones de escritorio multiplataforma empleando recursos de desarrollo \textit{web}, por ejemplo \textit{HTML}, \textit{CSS} y \textit{JavaScript}.
 
-En cuanto a la librería de visualización de grafos, se ha escogido \textit{Vis.js}\cite{visjs}, puesto que además de ser gratuita y de código abierto, permite visualizar animaciones que recorren los vértices del grafo. Estas animaciones se emplean para representar el tráfico de red entre los nodos del algoritmo. En lo restante de este apartado se detalla el funcionamiento de los botones de la interfaz, y cómo interactúa el cliente con el proceso \textit{capturador}. La interfaz final de la aplicación puede apreciarse en la imagen de la figura~\ref{fig:dave1}.
+En cuanto a la librería de visualización de grafos, se ha escogido \textit{Vis.js} \cite{visjs}, puesto que además de ser gratuita y de código abierto, permite visualizar animaciones que recorren los vértices del grafo. Estas animaciones se emplean para representar el tráfico de red entre los nodos del algoritmo. En lo restante de este apartado se detalla el funcionamiento de los botones de la interfaz, y cómo interactúa el cliente con el proceso \textit{capturador}. La interfaz final de la aplicación puede apreciarse en la imagen de la figura~\ref{fig:dave1}.
 
 %\begin{figure}[h]
 %  \centering
@@ -386,7 +386,7 @@ Más adelante, en el siguiente apartado, se explica la funcionalidad del proceso
 
 \section{Implementación del \textit{manager}}
 
-Como se ha descrito anteriormente, el proceso \textit{manager} debe contener toda la funcionalidad relacionada con recibir mensajes de todos los procesos capturadores, y modificar la visualización de acuerdo con el origen, destino y contenido de estos. Puesto que es un proceso que debe interatuar con la visualización de la red que se visualiza, es necesario que sea implementado junto con la interfaz para tener acceso a las variables del programa necesarias.
+Como se ha descrito anteriormente, el proceso \textit{manager} debe contener toda la funcionalidad relacionada con recibir mensajes de todos los procesos capturadores, y modificar la visualización de acuerdo con el origen, destino y contenido de estos. Puesto que es un proceso que debe interactuar con la visualización de la red que se visualiza, es necesario que sea implementado junto con la interfaz para tener acceso a las variables del programa necesarias.
 
 En \textit{electron} se puede implementar fácilmente un proceso servidor con el módulo \texttt{dgram}, que permite crear y manejar \textit{sockets} UDP. La implementación básica de un servidor de este tipo se muestra a continuación:
 
@@ -469,15 +469,17 @@ function start_server() {
 
 En la implementación del cliente se emplean varias funciones auxiliares. Una de ellas es \texttt{print}, que imprime mensajes de log en la consola formateados para su lectura fácil. Recibe como primer parámetro la función que la llama, y como segundo el mensaje. De esta manera es posible determinar el origen de los mensajes de log. Por otra parte se emplea la función \texttt{formatLabel}, que formatea varios parámetros a mostrar en la interfaz de cada nodo.
 
-Como se puede observar la función asociada al evento \texttt{message} averigua, según la información sobre la conexión proporcionada por el \textit{socket}, el vértice del grafo que se corresponde con la conexión entre el nodo origen. Además de esto, tambíen obtiene los identificadores de ambos nodos implicados en la comunicación.
+Como se puede observar la función asociada al evento \texttt{message} averigua, según la información sobre la conexión proporcionada por el \textit{socket}, el vértice del grafo que se corresponde con la conexión entre el nodo origen. Además de esto, también obtiene los identificadores de ambos nodos implicados en la comunicación.
 
-La gestión de animaciones de la interfaz que representan los mensajes se lleva a cabo con la función \texttt{animateTraffic}, incluída con la librería de visualización de grafos. Admite como parámetro una lista de vértices en los que mostrar una animación, pero en el caso de este proyecto se indica sólo uno dado que se visualiza únicamente un mensaje por cada evento \texttt{message}.
+La gestión de animaciones de la interfaz que representan los mensajes se lleva a cabo con la función \texttt{animateTraffic}, incluida con la librería de visualización de grafos. Admite como parámetro una lista de vértices en los que mostrar una animación, pero en el caso de este proyecto se indica sólo uno dado que se visualiza únicamente un mensaje por cada evento \texttt{message}.
 
 \section{Caso de uso}
 
 En este apartado se demuestra la funcionalidad completa de la aplicación con un algoritmo concreto: \textit{Raft}. Cabe destacar que los pasos mostrados a continuación son únicamente un ejemplo concreto. Como es lógico, no es posible incluir tantas imágenes como combinaciones posibles de acciones del usuario.
 
-En primer lugar, es necesario ejecutar por una parte la aplicación de escritorio y por otra todas las instancias que se deseen del proceso capturador. Una vez incializadas se introduce en el campo asociado con el botón ''\textit{Add node}'' de la interfaz, una a una cada dirección de cada instancia. El proceso capturador muestra convenientemente, por la salida estándar, la dirección del nodo con el formato adecuado para que el usuario únicamente tenga que copiar y pegar la información, sin necesidad de escribir manualmente. El resultado de insertar varios nodos en el sistema de visualización es se puede apreciar en la captura de pantalla de la figura~\ref{fig:ui1}.
+En primer lugar, es necesario ejecutar por una parte la aplicación de escritorio y por otra todas las instancias que se deseen del proceso capturador. Una vez inicializadas se introduce en el campo asociado con el botón ''\textit{Add node}'' de la interfaz, una a una cada dirección de cada instancia. El proceso capturador muestra convenientemente, por la salida estándar, la dirección del nodo con el formato adecuado para que el usuario únicamente tenga que copiar y pegar la información, sin necesidad de escribir manualmente. El resultado de insertar varios nodos en el sistema de visualización es se puede apreciar en la captura de pantalla de la figura~\ref{fig:ui1}.
+
+\newpage
 
 %\begin{figure}[h]
 %  \centering
@@ -493,9 +495,11 @@ En primer lugar, es necesario ejecutar por una parte la aplicación de escritori
 \label{fig:ui1}
 }
 
-Los contenidos visualizados de cada nodo son los siguientes: puerto del algoritmo, puerto del proceso capturador, dirección IP del nodo, y \textit{term} acutal. Como se puede observar, se desconoce el \texttt{term} de cada nodo. Esto se debe a que la visualización del algoritmo únicamente conoce el estado a partir del contenido de los mensajes que captura el proceso capturador. Puesto que todavía no se han enviado mensajes, esta información es desconocida por el momento.
+Los contenidos visualizados de cada nodo son los siguientes: puerto del algoritmo, puerto del proceso capturador, dirección IP del nodo, y \textit{term} actual. Como se puede observar, se desconoce el \textit{term} de cada nodo. Esto se debe a que la visualización del algoritmo únicamente conoce el estado a partir del contenido de los mensajes que captura el proceso capturador. Puesto que todavía no se han enviado mensajes, esta información es desconocida por el momento.
 
 En las figuras~\ref{fig:ui2},~\ref{fig:ui3} y~\ref{fig:ui4} se muestra el procedimiento seguido para añadir una nueva conexión. En primer lugar, se pulsa en el botón de edición para acceder al menú de conexiones, esto se puede observar en la figura~\ref{fig:ui2}. Seguidamente se pulsa el botón ''\textit{Add Connection}''. A continuación se pulsa en un nodo y, manteniendo la pulsación, se arrastra el puntero hasta otro nodo donde se suelta (Figura~\ref{fig:ui3}). El resultado son dos vértices entre ambos nodos, cada uno simboliza la conexión en un sentido. El resultado final de este paso se muestra en la figura~\ref{fig:ui4}. A continuación se sigue el mismo procedimiento para añadir las conexiones restantes que se deseen. Un ejemplo de configuración final se puede apreciar en la figura~\ref{fig:ui5}.
+
+\newpage
 
 %\begin{figure}[p]
 %  \centering
@@ -522,6 +526,8 @@ En las figuras~\ref{fig:ui2},~\ref{fig:ui3} y~\ref{fig:ui4} se muestra el proced
 \captionof{figure}{Proceso de crear una nueva conexión}
 \label{fig:ui3}
 }
+
+\newpage
 
 %\begin{figure}[p]
 %  \centering
@@ -551,7 +557,7 @@ En las figuras~\ref{fig:ui2},~\ref{fig:ui3} y~\ref{fig:ui4} se muestra el proced
 
 \newpage
 
-Ahora que se han añadido los nodos y conexiones deseados, se puede proceder a inciar la ejecución de cada uno de los nodos. Para ello se pulsará sobre un nodo para seleccionarlo, y posteriormente se pulsará el botón ''\textit{Start selected nodes}''. Seguidamente se seleccionarán los nodos restantes y se pulsará el mismo botón de nuevo. Esto provocará que el primer nodo sea líder puesto que comenzará la ejecución antes que los demás. A partir de este momento, los mensajes entre nodos se mostrarán como círculos azules recorriendo los vértices. Como es lógico, en la imagen no se muestra la animación. Cabe destacar que el campo \texttt{term} cuyo valor antes era desconocido, ahora se conoce puesto que se extrae de los mensajes. El resultado final se puede apreciar en la figura~\ref{fig:ui6}.
+Ahora que se han añadido los nodos y conexiones deseados, se puede proceder a iniciar la ejecución de cada uno de los nodos. Para ello se pulsará sobre un nodo para seleccionarlo, y posteriormente se pulsará el botón ''\textit{Start selected nodes}''. Seguidamente se seleccionarán los nodos restantes y se pulsará el mismo botón de nuevo. Esto provocará que el primer nodo sea líder puesto que comenzará la ejecución antes que los demás. A partir de este momento, los mensajes entre nodos se mostrarán como círculos azules recorriendo los vértices. Como es lógico, en la imagen no se muestra la animación. Cabe destacar que el campo \textit{term} cuyo valor antes era desconocido, ahora se conoce puesto que se extrae de los mensajes. El resultado final se puede apreciar en la figura~\ref{fig:ui6}.
 
 %\begin{figure}[p]
 %  \centering
@@ -567,6 +573,8 @@ Ahora que se han añadido los nodos y conexiones deseados, se puede proceder a i
 }
 
 Cabe destacar que no es necesario añadir todos los nodos y las conexiones antes de arrancar la ejecución de estos. Se pueden añadir sin problema durante la ejecución. Un ejemplo de esto se muestra en las figuras~\ref{fig:ui7} y~\ref{fig:ui8}, donde se añade otro nodo y se conecta a uno de los nodos existentes.
+
+\newpage
 
 %\begin{figure}[p]
 %  \centering
@@ -598,7 +606,7 @@ Cabe destacar que no es necesario añadir todos los nodos y las conexiones antes
 
 \section{Comentarios sobre la implementación}
 
-Como se ha descrito en la introducción, uno de los objetivos de este proyecto es proporcionar una herramienta que permita visualizar algoritmos distribuidos, permitiendo la posibilidad de intercambiar el algoritmo a visualizar. Tanto la arquitectura propuesta como la implementación permiten la visualización de otros algoritmos, sin embargo hay ciertos aspectos que es necesario tener en cuenta. No existe ningun formato universal de mensajes entre nodos de cualquier algoritmo distribuido, por tanto hay ciertos parámetros que se tienen que modificar para admitir el nuevo algoritmo.
+Como se ha descrito en la introducción, uno de los objetivos de este proyecto es proporcionar una herramienta que permita visualizar algoritmos distribuidos, permitiendo la posibilidad de intercambiar el algoritmo a visualizar. Tanto la arquitectura propuesta como la implementación permiten la visualización de otros algoritmos, sin embargo hay ciertos aspectos que es necesario tener en cuenta. No existe ningún formato universal de mensajes entre nodos de cualquier algoritmo distribuido, por tanto hay ciertos parámetros que se tienen que modificar para admitir el nuevo algoritmo.
 
 \begin{itemize}
 \item En primer lugar, se debe definir el formato de los mensajes para modificar debidamente las funcionalidades de la interfaz que muestran información sobre estos. Estas modificaciones se harían en el proceso \textit{manager}, dado que es el proceso que modifica la visualización del algoritmo.
@@ -606,7 +614,7 @@ Como se ha descrito en la introducción, uno de los objetivos de este proyecto e
 \item También es necesario modificar el proceso capturador de tal manera que se comunica de la forma adecuada con el nuevo algoritmo. En el caso de esta implementación, el algoritmo se controla por la entrada estándar, pero podría darse el caso en el control se llevase a cabo desde un dispositivo o desde un \textit{socket}.
 \end{itemize}
 
-En lo restante de esta sección se comentarán tanto los requistos para ejecutar el sistema, como las dependencias de cada módulo.
+En lo restante de esta sección se comentarán tanto los requisitos para ejecutar el sistema, como las dependencias de cada módulo.
 
 \subsection{Dependencias}
 
